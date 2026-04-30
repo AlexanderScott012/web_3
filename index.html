@@ -1,158 +1,1149 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Python Maestro - Aprendizaje Progresivo</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/pyodide/v0.29.3/full/pyodide.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
-    <style>
-        body {
-            background: #0a0a0a;
-            color: #e5e5e5;
-            font-family: 'Inter', sans-serif;
-        }
-        .mono { font-family: 'JetBrains Mono', monospace; }
-        
-        .header {
-            background: rgba(10, 10, 10, 0.98);
-            border-bottom: 4px solid #ff0033;
-        }
-        .card {
-            background: #111111;
-            border: 1px solid #444;
-        }
-        .code-editor {
-            background: #000;
-            color: #67e8f9;
-            border: 2px solid #ff0033;
-            font-family: monospace;
-            resize: vertical;
-        }
-        .output {
-            background: #0a0a0a;
-            border: 2px solid #c026d3;
-            font-family: monospace;
-            white-space: pre-wrap;
-            line-height: 1.6;
-        }
-    </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Python Maestro — Guía Interactiva</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --py-yellow: #FFD43B;
+    --py-blue: #4B8BBE;
+    --py-dark: #0d1117;
+    --py-card: #161b22;
+    --py-border: #30363d;
+    --py-text: #e6edf3;
+    --py-muted: #8b949e;
+    --py-green: #3fb950;
+    --py-red: #f85149;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--py-dark);
+    color: var(--py-text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  /* BG grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: linear-gradient(var(--py-border) 1px, transparent 1px),
+                      linear-gradient(90deg, var(--py-border) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.18;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Header glow */
+  .header-glow {
+    background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(75,139,190,0.35) 0%, transparent 70%);
+  }
+
+  /* Tab buttons */
+  .tab-btn {
+    position: relative;
+    padding: 10px 22px;
+    border-radius: 8px 8px 0 0;
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+    color: var(--py-muted);
+    background: transparent;
+  }
+  .tab-btn:hover { color: var(--py-text); background: rgba(255,255,255,0.04); }
+  .tab-btn.active {
+    color: var(--py-yellow);
+    background: var(--py-card);
+    border-color: var(--py-border);
+    border-bottom-color: var(--py-card);
+  }
+
+  /* Cards */
+  .topic-card {
+    background: var(--py-card);
+    border: 1px solid var(--py-border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+  .topic-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,212,59,0.06) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity 0.25s;
+  }
+  .topic-card:hover { border-color: var(--py-yellow); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(255,212,59,0.12); }
+  .topic-card:hover::before { opacity: 1; }
+  .topic-card.done { border-color: var(--py-green) !important; }
+  .topic-card.done .card-check { opacity: 1; }
+
+  .card-check { opacity: 0; transition: opacity 0.2s; }
+
+  /* Code block */
+  .code-block {
+    background: #010409;
+    border: 1px solid var(--py-border);
+    border-radius: 8px;
+    padding: 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    line-height: 1.7;
+    position: relative;
+    overflow-x: auto;
+  }
+  .code-block .kw { color: #ff7b72; }
+  .code-block .fn { color: #d2a8ff; }
+  .code-block .str { color: #a5d6ff; }
+  .code-block .cm { color: #8b949e; font-style: italic; }
+  .code-block .num { color: #79c0ff; }
+  .code-block .cls { color: #ffa657; }
+  .copy-btn {
+    position: absolute;
+    top: 8px; right: 8px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid var(--py-border);
+    border-radius: 6px;
+    color: var(--py-muted);
+    font-size: 0.7rem;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .copy-btn:hover { color: var(--py-yellow); border-color: var(--py-yellow); }
+
+  /* Detail panel */
+  #detail-panel {
+    transition: all 0.3s;
+  }
+
+  /* Quiz */
+  .quiz-opt {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--py-border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+  }
+  .quiz-opt:hover { border-color: var(--py-blue); background: rgba(75,139,190,0.1); }
+  .quiz-opt.correct { border-color: var(--py-green) !important; background: rgba(63,185,80,0.12) !important; color: var(--py-green); }
+  .quiz-opt.wrong { border-color: var(--py-red) !important; background: rgba(248,81,73,0.12) !important; color: var(--py-red); }
+  .quiz-opt.disabled { pointer-events: none; }
+
+  /* Progress bar */
+  .prog-bar-inner {
+    height: 100%;
+    background: linear-gradient(90deg, var(--py-blue), var(--py-yellow));
+    border-radius: 99px;
+    transition: width 0.5s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* Flash card flip */
+  .flashcard-wrap { perspective: 1000px; height: 180px; cursor: pointer; }
+  .flashcard-inner {
+    width: 100%; height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.5s;
+  }
+  .flashcard-wrap.flipped .flashcard-inner { transform: rotateY(180deg); }
+  .flashcard-front, .flashcard-back {
+    position: absolute; inset: 0;
+    backface-visibility: hidden;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    text-align: center;
+    border: 1px solid var(--py-border);
+  }
+  .flashcard-front { background: var(--py-card); }
+  .flashcard-back { background: #1a2233; transform: rotateY(180deg); border-color: var(--py-blue); }
+
+  /* Table */
+  .data-table th { color: var(--py-yellow); font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; }
+  .data-table td, .data-table th { padding: 10px 14px; border-bottom: 1px solid var(--py-border); font-size: 0.88rem; }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* Accordion */
+  .acc-body { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
+  .acc-body.open { max-height: 800px; }
+  .acc-arrow { transition: transform 0.3s; }
+  .acc-arrow.open { transform: rotate(180deg); }
+
+  /* Pill badge */
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 99px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  /* Animations */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .fade-up { animation: fadeUp 0.35s ease both; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--py-border); border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--py-muted); }
+
+  /* Tab content hidden */
+  .tab-content { display: none; }
+  .tab-content.active { display: block; animation: fadeUp 0.3s ease both; }
+</style>
 </head>
-<body>
+<body class="relative z-10">
 
-<div class="header py-6 sticky top-0 z-50">
-    <div class="max-w-6xl mx-auto px-6 flex items-center justify-between">
-        <div class="flex items-center gap-4">
-            <span class="text-5xl">🐍</span>
-            <div>
-                <h1 class="text-4xl font-black text-red-500">PYTHON MAESTRO</h1>
-                <p class="text-red-400 mono text-sm">Aprendizaje Progresivo desde Principiante</p>
-            </div>
+<!-- ===== HEADER ===== -->
+<div class="header-glow sticky top-0 z-50" style="background-color: rgba(13,17,23,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid var(--py-border);">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between flex-wrap gap-3">
+    <div class="flex items-center gap-3">
+      <span class="text-3xl">🐍</span>
+      <div>
+        <h1 class="font-extrabold text-xl leading-none" style="color: var(--py-yellow);">Python Maestro</h1>
+        <p class="text-xs mt-0.5" style="color: var(--py-muted);">Guía Interactiva de Estudio</p>
+      </div>
+    </div>
+    <!-- Progress global -->
+    <div class="flex items-center gap-3 flex-1 max-w-xs">
+      <span class="text-xs whitespace-nowrap" style="color: var(--py-muted);">Progreso</span>
+      <div class="flex-1 h-2 rounded-full" style="background: var(--py-border);">
+        <div class="prog-bar-inner" id="global-prog" style="width:0%"></div>
+      </div>
+      <span class="mono text-xs font-bold" id="global-prog-txt" style="color: var(--py-yellow);">0%</span>
+    </div>
+    <button onclick="resetProgress()" class="text-xs px-3 py-1.5 rounded-md border hover:border-red-500 hover:text-red-400 transition-colors" style="border-color: var(--py-border); color: var(--py-muted);">Reset</button>
+  </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 py-8 relative z-10">
+
+  <!-- ===== ZEN BANNER ===== -->
+  <div class="rounded-xl p-6 mb-8 text-center relative overflow-hidden" style="background: linear-gradient(135deg, #0d1b2a 0%, #1a2233 100%); border: 1px solid var(--py-blue);">
+    <div class="absolute inset-0 opacity-10" style="background: radial-gradient(circle at 30% 50%, var(--py-blue) 0%, transparent 60%), radial-gradient(circle at 70% 50%, var(--py-yellow) 0%, transparent 60%);"></div>
+    <p class="mono text-xs mb-1 relative z-10" style="color: var(--py-muted);">import this &nbsp;→&nbsp; El ADN de Python</p>
+    <p class="font-bold text-lg relative z-10" style="color: var(--py-yellow);">"Beautiful is better than ugly. Explicit is better than implicit."</p>
+    <p class="text-sm mt-1 relative z-10" style="color: var(--py-muted);">— The Zen of Python, Tim Peters</p>
+  </div>
+
+  <!-- ===== TABS NAV ===== -->
+  <div class="flex flex-wrap gap-1 mb-0" style="border-bottom: 1px solid var(--py-border);">
+    <button class="tab-btn active" onclick="switchTab('fundamentos', this)">🧱 Fundamentos</button>
+    <button class="tab-btn" onclick="switchTab('intermedio', this)">⚙️ Intermedio</button>
+    <button class="tab-btn" onclick="switchTab('avanzado', this)">🚀 Avanzado</button>
+    <button class="tab-btn" onclick="switchTab('ecosistema', this)">🌍 Ecosistema</button>
+    <button class="tab-btn" onclick="switchTab('quiz', this)">🎯 Quiz</button>
+    <button class="tab-btn" onclick="switchTab('flashcards', this)">🃏 Flashcards</button>
+    <button class="tab-btn" onclick="switchTab('operadores', this)">📊 Operadores</button>
+  </div>
+
+  <!-- ===== TAB: FUNDAMENTOS ===== -->
+  <div id="tab-fundamentos" class="tab-content active pt-6">
+    <h2 class="font-extrabold text-2xl mb-1" style="color: var(--py-yellow);">Fundamentos de Python</h2>
+    <p class="mb-6 text-sm" style="color: var(--py-muted);">Haz clic en cada tema para expandir su contenido y marcarlo como completado.</p>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+      <!-- Variables & Tipos -->
+      <div class="topic-card p-5" id="card-tipos" onclick="toggleTopic('tipos')">
+        <div class="flex justify-between items-start mb-2">
+          <div>
+            <span class="badge mb-2" style="background: rgba(255,212,59,0.15); color: var(--py-yellow);">Básico</span>
+            <h3 class="font-bold text-base">Variables y Tipos de Datos</h3>
+            <p class="text-xs mt-1" style="color: var(--py-muted);">int, float, str, bool</p>
+          </div>
+          <div class="flex gap-2 items-center">
+            <span class="card-check text-lg">✅</span>
+            <span id="arr-tipos" class="text-sm" style="color: var(--py-muted);">▼</span>
+          </div>
         </div>
-    </div>
-</div>
+        <div class="acc-body" id="body-tipos">
+          <div class="pt-3 space-y-3" onclick="event.stopPropagation()">
+            <p class="text-sm" style="color: var(--py-muted);">Python tiene tipado dinámico — no necesitas declarar el tipo, Python lo infiere.</p>
+            <div class="code-block">
+              <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+<span class="cm"># Enteros y flotantes</span>
+edad = <span class="num">25</span>
+precio = <span class="num">19.99</span>
 
-<div class="max-w-6xl mx-auto px-6 py-10">
-    <div class="flex border-b border-gray-700 mb-10">
-        <button onclick="switchLevel(0)" class="level-tab active px-8 py-4 text-lg">01 Principiante</button>
-        <button onclick="switchLevel(1)" class="level-tab px-8 py-4 text-lg">02 Intermedio</button>
-        <button onclick="switchLevel(2)" class="level-tab px-8 py-4 text-lg">03 F-Strings Avanzado</button>
+<span class="cm"># Cadenas de texto</span>
+nombre = <span class="str">"Python"</span>
+saludo = <span class="kw">f</span><span class="str">"Hola, {nombre}!"</span>
+
+<span class="cm"># Booleanos</span>
+activo = <span class="kw">True</span>
+vacio = <span class="kw">False</span>
+
+<span class="cm"># Type hints (moderno)</span>
+<span class="kw">def</span> <span class="fn">suma</span>(a: <span class="cls">int</span>, b: <span class="cls">int</span>) -> <span class="cls">int</span>:
+    <span class="kw">return</span> a + b
+            </div>
+            <button class="w-full py-2 rounded-lg text-sm font-bold transition-colors" style="background: rgba(63,185,80,0.15); color: var(--py-green); border: 1px solid var(--py-green);" onclick="markDone('tipos')">Marcar como aprendido ✓</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Estructuras de Datos -->
+      <div class="topic-card p-5" id="card-estructuras" onclick="toggleTopic('estructuras')">
+        <div class="flex justify-between items-start mb-2">
+          <div>
+            <span class="badge mb-2" style="background: rgba(255,212,59,0.15); color: var(--py-yellow);">Básico</span>
+            <h3 class="font-bold text-base">Estructuras de Datos</h3>
+            <p class="text-xs mt-1" style="color: var(--py-muted);">Listas, Tuplas, Dicts, Sets</p>
+          </div>
+          <div class="flex gap-2 items-center">
+            <span class="card-check text-lg">✅</span>
+            <span id="arr-estructuras" class="text-sm" style="color: var(--py-muted);">▼</span>
+          </div>
+        </div>
+        <div class="acc-body" id="body-estructuras">
+          <div class="pt-3 space-y-3" onclick="event.stopPropagation()">
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <div class="rounded-lg p-3" style="background: rgba(75,139,190,0.1); border: 1px solid rgba(75,139,190,0.3);">
+                <p class="font-bold mb-1" style="color: var(--py-blue);">📋 Lista</p>
+                <p style="color: var(--py-muted);">Mutable, ordenada, permite duplicados</p>
+              </div>
+              <div class="rounded-lg p-3" style="background: rgba(255,212,59,0.08); border: 1px solid rgba(255,212,59,0.3);">
+                <p class="font-bold mb-1" style="color: var(--py-yellow);">📦 Tupla</p>
+                <p style="color: var(--py-muted);">Inmutable, ordenada, rápida</p>
+              </div>
+              <div class="rounded-lg p-3" style="background: rgba(63,185,80,0.08); border: 1px solid rgba(63,185,80,0.3);">
+                <p class="font-bold mb-1" style="color: var(--py-green);">🗂️ Dict</p>
+                <p style="color: var(--py-muted);">Clave-valor, base de JSON</p>
+              </div>
+              <div class="rounded-lg p-3" style="background: rgba(248,81,73,0.08); border: 1px solid rgba(248,81,73,0.3);">
+                <p class="font-bold mb-1" style="color: var(--py-red);">🎯 Set</p>
+                <p style="color: var(--py-muted);">Único, sin orden, sin duplicados</p>
+              </div>
+            </div>
+            <div class="code-block">
+              <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+lista = [<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>, <span class="str">"hola"</span>]
+tupla = (<span class="num">10</span>, <span class="num">20</span>, <span class="num">30</span>)
+diccionario = {<span class="str">"nombre"</span>: <span class="str">"Ana"</span>, <span class="str">"edad"</span>: <span class="num">28</span>}
+conjunto = {<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>, <span class="num">2</span>}  <span class="cm"># → {1, 2, 3}</span>
+
+<span class="cm"># List comprehension (¡elegante!)</span>
+cuadrados = [x**<span class="num">2</span> <span class="kw">for</span> x <span class="kw">in</span> <span class="fn">range</span>(<span class="num">10</span>)]
+            </div>
+            <button class="w-full py-2 rounded-lg text-sm font-bold transition-colors" style="background: rgba(63,185,80,0.15); color: var(--py-green); border: 1px solid var(--py-green);" onclick="markDone('estructuras')">Marcar como aprendido ✓</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Control de Flujo -->
+      <div class="topic-card p-5" id="card-flujo" onclick="toggleTopic('flujo')">
+        <div class="flex justify-between items-start mb-2">
+          <div>
+            <span class="badge mb-2" style="background: rgba(255,212,59,0.15); color: var(--py-yellow);">Básico</span>
+            <h3 class="font-bold text-base">Control de Flujo</h3>
+            <p class="text-xs mt-1" style="color: var(--py-muted);">if, for, while, match</p>
+          </div>
+          <div class="flex gap-2 items-center">
+            <span class="card-check text-lg">✅</span>
+            <span id="arr-flujo" class="text-sm" style="color: var(--py-muted);">▼</span>
+          </div>
+        </div>
+        <div class="acc-body" id="body-flujo">
+          <div class="pt-3 space-y-3" onclick="event.stopPropagation()">
+            <div class="code-block">
+              <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+<span class="cm"># Condicional clásico</span>
+nota = <span class="num">85</span>
+<span class="kw">if</span> nota >= <span class="num">90</span>:
+    <span class="fn">print</span>(<span class="str">"Excelente"</span>)
+<span class="kw">elif</span> nota >= <span class="num">70</span>:
+    <span class="fn">print</span>(<span class="str">"Aprobado"</span>)
+<span class="kw">else</span>:
+    <span class="fn">print</span>(<span class="str">"Reprobado"</span>)
+
+<span class="cm"># Match (Python 3.10+)</span>
+comando = <span class="str">"salir"</span>
+<span class="kw">match</span> comando:
+    <span class="kw">case</span> <span class="str">"inicio"</span>: <span class="fn">print</span>(<span class="str">"Iniciando..."</span>)
+    <span class="kw">case</span> <span class="str">"salir"</span>:  <span class="fn">print</span>(<span class="str">"Adiós!"</span>)
+    <span class="kw">case</span> _:        <span class="fn">print</span>(<span class="str">"Desconocido"</span>)
+
+<span class="cm"># Bucle with walrus operator</span>
+<span class="kw">while</span> (n := <span class="fn">int</span>(<span class="fn">input</span>(<span class="str">"Número: "</span>))) != <span class="num">0</span>:
+    <span class="fn">print</span>(n * <span class="num">2</span>)
+            </div>
+            <button class="w-full py-2 rounded-lg text-sm font-bold transition-colors" style="background: rgba(63,185,80,0.15); color: var(--py-green); border: 1px solid var(--py-green);" onclick="markDone('flujo')">Marcar como aprendido ✓</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Zen de Python -->
+      <div class="topic-card p-5" id="card-zen" onclick="toggleTopic('zen')">
+        <div class="flex justify-between items-start mb-2">
+          <div>
+            <span class="badge mb-2" style="background: rgba(75,139,190,0.2); color: var(--py-blue);">Filosofía</span>
+            <h3 class="font-bold text-base">El Zen de Python</h3>
+            <p class="text-xs mt-1" style="color: var(--py-muted);">La filosofía del lenguaje</p>
+          </div>
+          <div class="flex gap-2 items-center">
+            <span class="card-check text-lg">✅</span>
+            <span id="arr-zen" class="text-sm" style="color: var(--py-muted);">▼</span>
+          </div>
+        </div>
+        <div class="acc-body" id="body-zen">
+          <div class="pt-3 space-y-2" onclick="event.stopPropagation()">
+            <div class="space-y-1.5">
+              ${['Beautiful is better than ugly.','Explicit is better than implicit.','Simple is better than complex.','Readability counts.','Errors should never pass silently.','In the face of ambiguity, refuse the temptation to guess.'].map(z => `<div class="flex items-start gap-2 text-sm"><span style="color:var(--py-yellow)">🐍</span><span style="color:var(--py-muted)">${z}</span></div>`).join('')}
+            </div>
+            <button class="w-full py-2 rounded-lg text-sm font-bold mt-3 transition-colors" style="background: rgba(63,185,80,0.15); color: var(--py-green); border: 1px solid var(--py-green);" onclick="markDone('zen')">Marcar como aprendido ✓</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===== TAB: INTERMEDIO ===== -->
+  <div id="tab-intermedio" class="tab-content pt-6">
+    <h2 class="font-extrabold text-2xl mb-1" style="color: var(--py-blue);">Programación Intermedia</h2>
+    <p class="mb-6 text-sm" style="color: var(--py-muted);">Aquí dejas de escribir scripts simples y empiezas a construir software real.</p>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+      <!-- Funciones -->
+      <div class="topic-card p-5" id="card-funciones" onclick="toggleTopic('funciones')">
+        <div class="flex justify-between items-start mb-2">
+          <div>
+            <span class="badge mb-2" style="background: rgba(75,139,190,0.15); color: var(--py-blue);">Intermedio</span>
+            <h3 class="font-bold text-base">Funciones Avanzadas</h3>
+            <p class="text-xs mt-1" style="color: var(--py-muted);">*args, **kwargs, lambda</p>
+          </div>
+          <div class="flex gap-2 items-center">
+            <span class="card-check text-lg">✅</span>
+            <span id="arr-funciones" class="text-sm" style="color: var(--py-muted);">▼</span>
+          </div>
+        </div>
+        <div class="acc-body" id="body-funciones">
+          <div class="pt-3 space-y-3" onclick="event.stopPropagation()">
+            <div class="code-block">
+              <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+<span class="cm"># *args captura múltiples argumentos</span>
+<span class="kw">def</span> <span class="fn">sumar</span>(*numeros):
+    <span class="kw">return</span> <span class="fn">sum</span>(numeros)
+
+<span class="fn">sumar</span>(<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>, <span class="num">4</span>)  <span class="cm"># → 10</span>
+
+<span class="cm"># **kwargs captura argumentos con nombre</span>
+<span class="kw">def</span> <span class="fn">perfil</span>(**datos):
+    <span class="kw">for</span> clave, valor <span class="kw">in</span> datos.items():
+        <span class="fn">print</span>(<span class="kw">f</span><span class="str">"{clave}: {valor}"</span>)
+
+<span class="fn">perfil</span>(nombre=<span class="str">"Ana"</span>, edad=<span class="num">28</span>)
+
+<span class="cm"># Lambda (función anónima)</span>
+doble = <span class="kw">lambda</span> x: x * <span class="num">2</span>
+ordenar = <span class="fn">sorted</span>(items, key=<span class="kw">lambda</span> x: x[<span class="str">'precio'</span>])
+            </div>
+            <button class="w-full py-2 rounded-lg text-sm font-bold transition-colors" style="background: rgba(63,185,80,0.15); color: var(--py-green); border: 1px solid var(--py-green);" onclick="markDone('funciones')">Marcar como aprendido ✓</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- POO -->
+      <div class="topic-card p-5" id="card-poo" onclick="toggleTopic('poo')">
+        <div class="flex justify-between items-start mb-2">
+          <div>
+            <span class="badge mb-2" style="background: rgba(75,139,190,0.15); color: var(--py-blue);">Intermedio</span>
+            <h3 class="font-bold text-base">POO — Orientado a Objetos</h3>
+            <p class="text-xs mt-1" style="color: var(--py-muted);">Clases, herencia, polimorfismo</p>
+          </div>
+          <div class="flex gap-2 items-center">
+            <span class="card-check text-lg">✅</span>
+            <span id="arr-poo" class="text-sm" style="color: var(--py-muted);">▼</span>
+          </div>
+        </div>
+        <div class="acc-body" id="body-poo">
+          <div class="pt-3 space-y-3" onclick="event.stopPropagation()">
+            <div class="grid grid-cols-2 gap-2 text-xs mb-2">
+              <div class="p-2 rounded" style="background: rgba(255,166,87,0.1); border: 1px solid rgba(255,166,87,0.3); color: #ffa657;">🧱 Encapsulamiento</div>
+              <div class="p-2 rounded" style="background: rgba(75,139,190,0.1); border: 1px solid rgba(75,139,190,0.3); color: var(--py-blue);">🧬 Herencia</div>
+              <div class="p-2 rounded" style="background: rgba(63,185,80,0.1); border: 1px solid rgba(63,185,80,0.3); color: var(--py-green);">🔄 Polimorfismo</div>
+              <div class="p-2 rounded" style="background: rgba(210,168,255,0.1); border: 1px solid rgba(210,168,255,0.3); color: #d2a8ff;">📐 Abstracción</div>
+            </div>
+            <div class="code-block">
+              <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+<span class="kw">class</span> <span class="cls">Animal</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, nombre):
+        <span class="kw">self</span>.nombre = nombre
+
+    <span class="kw">def</span> <span class="fn">hablar</span>(<span class="kw">self</span>):
+        <span class="kw">raise</span> <span class="cls">NotImplementedError</span>
+
+<span class="kw">class</span> <span class="cls">Perro</span>(<span class="cls">Animal</span>):  <span class="cm"># herencia</span>
+    <span class="kw">def</span> <span class="fn">hablar</span>(<span class="kw">self</span>):
+        <span class="kw">return</span> <span class="kw">f</span><span class="str">"{self.nombre} dice: ¡Guau!"</span>
+
+<span class="cm"># Dataclass (Python 3.7+)</span>
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
+
+<span class="kw">@</span><span class="fn">dataclass</span>
+<span class="kw">class</span> <span class="cls">Punto</span>:
+    x: <span class="cls">float</span>
+    y: <span class="cls">float</span>
+            </div>
+            <button class="w-full py-2 rounded-lg text-sm font-bold transition-colors" style="background: rgba(63,185,80,0.15); color: var(--py-green); border: 1px solid var(--py-green);" onclick="markDone('poo')">Marcar como aprendido ✓</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Excepciones -->
+      <div class="topic-card p-5" id="card-excepciones" onclick="toggleTopic('excepciones')">
+        <div class="flex justify-between items-start mb-2">
+          <div>
+            <span class="badge mb-2" style="background: rgba(75,139,190,0.15); color: var(--py-blue);">Intermedio</span>
+            <h3 class="font-bold text-base">Manejo de Excepciones</h3>
+            <p class="text-xs mt-1" style="color: var(--py-muted);">try, except, finally</p>
+          </div>
+          <div class="flex gap-2 items-center">
+            <span class="card-check text-lg">✅</span>
+            <span id="arr-excepciones" class="text-sm" style="color: var(--py-muted);">▼</span>
+          </div>
+        </div>
+        <div class="acc-body" id="body-excepciones">
+          <div class="pt-3 space-y-3" onclick="event.stopPropagation()">
+            <div class="code-block">
+              <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+<span class="kw">try</span>:
+    resultado = <span class="num">10</span> / <span class="num">0</span>
+<span class="kw">except</span> <span class="cls">ZeroDivisionError</span> <span class="kw">as</span> e:
+    <span class="fn">print</span>(<span class="kw">f</span><span class="str">"Error: {e}"</span>)
+<span class="kw">except</span> (<span class="cls">TypeError</span>, <span class="cls">ValueError</span>):
+    <span class="fn">print</span>(<span class="str">"Tipo de dato incorrecto"</span>)
+<span class="kw">else</span>:
+    <span class="fn">print</span>(<span class="str">"¡Sin errores!"</span>)
+<span class="kw">finally</span>:
+    <span class="fn">print</span>(<span class="str">"Siempre se ejecuta"</span>)
+
+<span class="cm"># Context manager (with)</span>
+<span class="kw">with</span> <span class="fn">open</span>(<span class="str">"archivo.txt"</span>) <span class="kw">as</span> f:
+    contenido = f.<span class="fn">read</span>()  <span class="cm"># se cierra solo</span>
+            </div>
+            <button class="w-full py-2 rounded-lg text-sm font-bold transition-colors" style="background: rgba(63,185,80,0.15); color: var(--py-green); border: 1px solid var(--py-green);" onclick="markDone('excepciones')">Marcar como aprendido ✓</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Módulos -->
+      <div class="topic-card p-5" id="card-modulos" onclick="toggleTopic('modulos')">
+        <div class="flex justify-between items-start mb-2">
+          <div>
+            <span class="badge mb-2" style="background: rgba(75,139,190,0.15); color: var(--py-blue);">Intermedio</span>
+            <h3 class="font-bold text-base">Módulos y Paquetes</h3>
+            <p class="text-xs mt-1" style="color: var(--py-muted);">import, pip, organización</p>
+          </div>
+          <div class="flex gap-2 items-center">
+            <span class="card-check text-lg">✅</span>
+            <span id="arr-modulos" class="text-sm" style="color: var(--py-muted);">▼</span>
+          </div>
+        </div>
+        <div class="acc-body" id="body-modulos">
+          <div class="pt-3 space-y-3" onclick="event.stopPropagation()">
+            <div class="code-block">
+              <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+<span class="cm"># Importar módulos</span>
+<span class="kw">import</span> math
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timedelta
+<span class="kw">import</span> json <span class="kw">as</span> j
+
+<span class="cm"># Estructura de paquete</span>
+<span class="cm"># mi_proyecto/</span>
+<span class="cm">#   __init__.py</span>
+<span class="cm">#   modulo_a.py</span>
+<span class="cm">#   modulo_b.py</span>
+
+<span class="cm"># pip install (terminal)</span>
+<span class="cm"># pip install requests pandas numpy</span>
+<span class="cm"># pip freeze > requirements.txt</span>
+            </div>
+            <button class="w-full py-2 rounded-lg text-sm font-bold transition-colors" style="background: rgba(63,185,80,0.15); color: var(--py-green); border: 1px solid var(--py-green);" onclick="markDone('modulos')">Marcar como aprendido ✓</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===== TAB: AVANZADO ===== -->
+  <div id="tab-avanzado" class="tab-content pt-6">
+    <h2 class="font-extrabold text-2xl mb-1" style="color: #d2a8ff;">Características Avanzadas</h2>
+    <p class="mb-6 text-sm" style="color: var(--py-muted);">Lo que diferencia a un principiante de un profesional.</p>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+      <!-- Decoradores -->
+      <div class="topic-card p-5" id="card-decoradores" onclick="toggleTopic('decoradores')">
+        <div class="flex justify-between items-start mb-2">
+          <div>
+            <span class="badge mb-2" style="background: rgba(210,168,255,0.15); color: #d2a8ff;">Avanzado</span>
+            <h3 class="font-bold text-base">Decoradores</h3>
+            <p class="text-xs mt-1" style="color: var(--py-muted);">Funciones que modifican funciones</p>
+          </div>
+          <div class="flex gap-2 items-center">
+            <span class="card-check text-lg">✅</span>
+            <span id="arr-decoradores" class="text-sm" style="color: var(--py-muted);">▼</span>
+          </div>
+        </div>
+        <div class="acc-body" id="body-decoradores">
+          <div class="pt-3 space-y-3" onclick="event.stopPropagation()">
+            <div class="code-block">
+              <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+<span class="kw">import</span> time
+
+<span class="kw">def</span> <span class="fn">cronometro</span>(func):
+    <span class="kw">def</span> <span class="fn">wrapper</span>(*args, **kwargs):
+        inicio = time.<span class="fn">time</span>()
+        resultado = <span class="fn">func</span>(*args, **kwargs)
+        fin = time.<span class="fn">time</span>()
+        <span class="fn">print</span>(<span class="kw">f</span><span class="str">"{func.__name__} tardó {fin-inicio:.4f}s"</span>)
+        <span class="kw">return</span> resultado
+    <span class="kw">return</span> wrapper
+
+<span class="kw">@</span><span class="fn">cronometro</span>  <span class="cm"># ← decorador</span>
+<span class="kw">def</span> <span class="fn">proceso_pesado</span>():
+    time.<span class="fn">sleep</span>(<span class="num">1</span>)
+    <span class="kw">return</span> <span class="str">"listo"</span>
+            </div>
+            <button class="w-full py-2 rounded-lg text-sm font-bold transition-colors" style="background: rgba(63,185,80,0.15); color: var(--py-green); border: 1px solid var(--py-green);" onclick="markDone('decoradores')">Marcar como aprendido ✓</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Generadores -->
+      <div class="topic-card p-5" id="card-generadores" onclick="toggleTopic('generadores')">
+        <div class="flex justify-between items-start mb-2">
+          <div>
+            <span class="badge mb-2" style="background: rgba(210,168,255,0.15); color: #d2a8ff;">Avanzado</span>
+            <h3 class="font-bold text-base">Generadores</h3>
+            <p class="text-xs mt-1" style="color: var(--py-muted);">yield — grandes datos sin explotar la RAM</p>
+          </div>
+          <div class="flex gap-2 items-center">
+            <span class="card-check text-lg">✅</span>
+            <span id="arr-generadores" class="text-sm" style="color: var(--py-muted);">▼</span>
+          </div>
+        </div>
+        <div class="acc-body" id="body-generadores">
+          <div class="pt-3 space-y-3" onclick="event.stopPropagation()">
+            <p class="text-xs" style="color: var(--py-muted);">Un generador produce valores uno a la vez, no carga todo en RAM. Ideal para millones de registros.</p>
+            <div class="code-block">
+              <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+<span class="cm"># Sin generador: carga TODO en RAM</span>
+<span class="kw">def</span> <span class="fn">millones_lista</span>():
+    <span class="kw">return</span> [x**<span class="num">2</span> <span class="kw">for</span> x <span class="kw">in</span> <span class="fn">range</span>(<span class="num">1_000_000</span>)]
+
+<span class="cm"># Con generador: produce de a uno ✅</span>
+<span class="kw">def</span> <span class="fn">millones_gen</span>():
+    <span class="kw">for</span> x <span class="kw">in</span> <span class="fn">range</span>(<span class="num">1_000_000</span>):
+        <span class="kw">yield</span> x**<span class="num">2</span>
+
+<span class="cm"># Generator expression</span>
+cuadrados = (x**<span class="num">2</span> <span class="kw">for</span> x <span class="kw">in</span> <span class="fn">range</span>(<span class="num">10</span>))
+            </div>
+            <button class="w-full py-2 rounded-lg text-sm font-bold transition-colors" style="background: rgba(63,185,80,0.15); color: var(--py-green); border: 1px solid var(--py-green);" onclick="markDone('generadores')">Marcar como aprendido ✓</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Asyncio -->
+      <div class="topic-card p-5" id="card-asyncio" onclick="toggleTopic('asyncio')">
+        <div class="flex justify-between items-start mb-2">
+          <div>
+            <span class="badge mb-2" style="background: rgba(210,168,255,0.15); color: #d2a8ff;">Avanzado</span>
+            <h3 class="font-bold text-base">Asincronía (asyncio)</h3>
+            <p class="text-xs mt-1" style="color: var(--py-muted);">async/await — tareas concurrentes</p>
+          </div>
+          <div class="flex gap-2 items-center">
+            <span class="card-check text-lg">✅</span>
+            <span id="arr-asyncio" class="text-sm" style="color: var(--py-muted);">▼</span>
+          </div>
+        </div>
+        <div class="acc-body" id="body-asyncio">
+          <div class="pt-3 space-y-3" onclick="event.stopPropagation()">
+            <div class="code-block">
+              <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+<span class="kw">import</span> asyncio
+
+<span class="kw">async def</span> <span class="fn">descargar</span>(url: <span class="cls">str</span>):
+    <span class="fn">print</span>(<span class="kw">f</span><span class="str">"Descargando {url}..."</span>)
+    <span class="kw">await</span> asyncio.<span class="fn">sleep</span>(<span class="num">1</span>)  <span class="cm"># simula I/O</span>
+    <span class="kw">return</span> <span class="kw">f</span><span class="str">"Datos de {url}"</span>
+
+<span class="kw">async def</span> <span class="fn">main</span>():
+    <span class="cm"># Ejecuta en PARALELO (no secuencial)</span>
+    resultados = <span class="kw">await</span> asyncio.<span class="fn">gather</span>(
+        <span class="fn">descargar</span>(<span class="str">"api.com/1"</span>),
+        <span class="fn">descargar</span>(<span class="str">"api.com/2"</span>),
+    )
+
+asyncio.<span class="fn">run</span>(<span class="fn">main</span>())
+            </div>
+            <button class="w-full py-2 rounded-lg text-sm font-bold transition-colors" style="background: rgba(63,185,80,0.15); color: var(--py-green); border: 1px solid var(--py-green);" onclick="markDone('asyncio')">Marcar como aprendido ✓</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- GIL & Memoria -->
+      <div class="topic-card p-5" id="card-internos" onclick="toggleTopic('internos')">
+        <div class="flex justify-between items-start mb-2">
+          <div>
+            <span class="badge mb-2" style="background: rgba(210,168,255,0.15); color: #d2a8ff;">Avanzado</span>
+            <h3 class="font-bold text-base">Arquitectura Interna</h3>
+            <p class="text-xs mt-1" style="color: var(--py-muted);">GIL, Bytecode, PVM, Garbage Collector</p>
+          </div>
+          <div class="flex gap-2 items-center">
+            <span class="card-check text-lg">✅</span>
+            <span id="arr-internos" class="text-sm" style="color: var(--py-muted);">▼</span>
+          </div>
+        </div>
+        <div class="acc-body" id="body-internos">
+          <div class="pt-3 space-y-3" onclick="event.stopPropagation()">
+            <div class="space-y-2">
+              <div class="p-3 rounded-lg text-sm" style="background: rgba(255,212,59,0.07); border: 1px solid rgba(255,212,59,0.2);">
+                <p class="font-bold mb-1" style="color: var(--py-yellow);">🔄 Bytecode + PVM</p>
+                <p style="color: var(--py-muted);">Python compila a bytecode (.pyc) que ejecuta la Python Virtual Machine — no va directo a código máquina como C++.</p>
+              </div>
+              <div class="p-3 rounded-lg text-sm" style="background: rgba(63,185,80,0.07); border: 1px solid rgba(63,185,80,0.2);">
+                <p class="font-bold mb-1" style="color: var(--py-green);">🗑️ Garbage Collector</p>
+                <p style="color: var(--py-muted);">Usa conteo de referencias. Cuando un objeto tiene 0 referencias, se libera automáticamente de la RAM.</p>
+              </div>
+              <div class="p-3 rounded-lg text-sm" style="background: rgba(248,81,73,0.07); border: 1px solid rgba(248,81,73,0.2);">
+                <p class="font-bold mb-1" style="color: var(--py-red);">🔒 GIL (Global Interpreter Lock)</p>
+                <p style="color: var(--py-muted);">Solo un hilo ejecuta bytecode a la vez. Garantiza seguridad de datos pero limita el verdadero paralelismo de hilos.</p>
+              </div>
+            </div>
+            <button class="w-full py-2 rounded-lg text-sm font-bold transition-colors" style="background: rgba(63,185,80,0.15); color: var(--py-green); border: 1px solid var(--py-green);" onclick="markDone('internos')">Marcar como aprendido ✓</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===== TAB: ECOSISTEMA ===== -->
+  <div id="tab-ecosistema" class="tab-content pt-6">
+    <h2 class="font-extrabold text-2xl mb-6" style="color: var(--py-green);">Ecosistema & Éxitos Reales</h2>
+
+    <!-- Tabla librerías -->
+    <div class="rounded-xl overflow-hidden mb-6" style="border: 1px solid var(--py-border);">
+      <div class="px-5 py-3" style="background: rgba(63,185,80,0.1); border-bottom: 1px solid var(--py-border);">
+        <h3 class="font-bold text-sm" style="color: var(--py-green);">📦 Librerías Clave por Área</h3>
+      </div>
+      <table class="data-table w-full">
+        <thead style="background: rgba(255,255,255,0.02);">
+          <tr><th class="text-left">Área</th><th class="text-left">Librerías</th><th class="text-left">Éxito Real</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>🔬 Ciencia de Datos</td><td class="mono text-xs" style="color: var(--py-yellow);">Pandas, NumPy, Matplotlib</td><td style="color: var(--py-muted);">Foto del Agujero Negro (2019)</td></tr>
+          <tr><td>🤖 Inteligencia Artificial</td><td class="mono text-xs" style="color: var(--py-yellow);">PyTorch, TensorFlow, Scikit-learn</td><td style="color: var(--py-muted);">ChatGPT · Netflix Recomendaciones</td></tr>
+          <tr><td>🌐 Desarrollo Web</td><td class="mono text-xs" style="color: var(--py-yellow);">Django, Flask, FastAPI</td><td style="color: var(--py-muted);">Instagram · Pinterest (Django)</td></tr>
+          <tr><td>⚙️ Automatización</td><td class="mono text-xs" style="color: var(--py-yellow);">Selenium, BeautifulSoup</td><td style="color: var(--py-muted);">Scripts NASA · Spotify</td></tr>
+        </tbody>
+      </table>
     </div>
 
-    <div id="content"></div>
-</div>
+    <!-- Casos de éxito -->
+    <h3 class="font-bold mb-3 text-sm" style="color: var(--py-muted); text-transform: uppercase; letter-spacing: 0.1em;">🏆 Casos de Éxito Detallados</h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="rounded-xl p-5" style="background: var(--py-card); border: 1px solid var(--py-border);">
+        <div class="text-3xl mb-3">🕳️</div>
+        <h4 class="font-bold mb-2" style="color: var(--py-yellow);">Agujero Negro (2019)</h4>
+        <p class="text-sm" style="color: var(--py-muted);">El Event Horizon Telescope usó <span class="mono text-xs" style="color: var(--py-blue);">NumPy</span> y <span class="mono text-xs" style="color: var(--py-blue);">SciPy</span> para procesar petabytes de datos de radiotelescopios en todo el mundo y generar la primera imagen de un agujero negro.</p>
+      </div>
+      <div class="rounded-xl p-5" style="background: var(--py-card); border: 1px solid var(--py-border);">
+        <div class="text-3xl mb-3">🚁</div>
+        <h4 class="font-bold mb-2" style="color: var(--py-yellow);">Ingenuity en Marte</h4>
+        <p class="text-sm" style="color: var(--py-muted);">La NASA utilizó Python para planificación de misiones y análisis de datos del helicóptero Ingenuity. Python es el estándar de oro en la industria aeroespacial para prototipado rápido.</p>
+      </div>
+      <div class="rounded-xl p-5" style="background: var(--py-card); border: 1px solid var(--py-border);">
+        <div class="text-3xl mb-3">🎬</div>
+        <h4 class="font-bold mb-2" style="color: var(--py-yellow);">Netflix</h4>
+        <p class="text-sm" style="color: var(--py-muted);">Python está en todo el ciclo de Netflix: desde análisis de red para streaming hasta los algoritmos de Machine Learning que te recomiendan qué ver.</p>
+      </div>
+    </div>
+
+    <!-- PEP 8 & Quality -->
+    <div class="mt-6 rounded-xl p-5" style="background: var(--py-card); border: 1px solid var(--py-border);">
+      <h3 class="font-bold mb-4" style="color: var(--py-yellow);">✨ Estándares de Calidad</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <p class="font-bold text-sm mb-1" style="color: var(--py-blue);">PEP 8 — Estilo Oficial</p>
+          <p class="text-xs mb-2" style="color: var(--py-muted);">Variables en <span class="mono">snake_case</span>, clases en <span class="mono">PascalCase</span></p>
+          <div class="code-block text-xs">
+<span class="cm"># ✅ Correcto PEP 8</span>
+nombre_usuario = <span class="str">"Ana"</span>
+<span class="kw">class</span> <span class="cls">MiClase</span>: ...
+
+<span class="cm"># ❌ Incorrecto</span>
+NombreUsuario = <span class="str">"Ana"</span>
+<span class="kw">class</span> <span class="cls">mi_clase</span>: ...
+          </div>
+        </div>
+        <div>
+          <p class="font-bold text-sm mb-1" style="color: var(--py-blue);">Type Hints</p>
+          <p class="text-xs mb-2" style="color: var(--py-muted);">Anota tipos para evitar errores silenciosos</p>
+          <div class="code-block text-xs">
+<span class="kw">def</span> <span class="fn">suma</span>(a: <span class="cls">int</span>, b: <span class="cls">int</span>) -> <span class="cls">int</span>:
+    <span class="kw">return</span> a + b
+
+<span class="kw">def</span> <span class="fn">saludo</span>(nombre: <span class="cls">str</span>) -> <span class="cls">str</span>:
+    <span class="kw">return</span> <span class="kw">f</span><span class="str">"Hola {nombre}"</span>
+          </div>
+        </div>
+        <div>
+          <p class="font-bold text-sm mb-1" style="color: var(--py-blue);">Testing con Pytest</p>
+          <p class="text-xs mb-2" style="color: var(--py-muted);">Un profesional siempre hace pruebas</p>
+          <div class="code-block text-xs">
+<span class="cm"># test_suma.py</span>
+<span class="kw">def</span> <span class="fn">test_suma_positivos</span>():
+    <span class="kw">assert</span> <span class="fn">suma</span>(<span class="num">2</span>, <span class="num">3</span>) == <span class="num">5</span>
+
+<span class="kw">def</span> <span class="fn">test_suma_negativos</span>():
+    <span class="kw">assert</span> <span class="fn">suma</span>(-<span class="num">1</span>, -<span class="num">1</span>) == -<span class="num">2</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TAB: QUIZ ===== -->
+  <div id="tab-quiz" class="tab-content pt-6">
+    <div class="max-w-2xl mx-auto">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h2 class="font-extrabold text-2xl" style="color: var(--py-yellow);">🎯 Quiz de Práctica</h2>
+          <p class="text-sm" style="color: var(--py-muted);">Pon a prueba tus conocimientos</p>
+        </div>
+        <div class="text-right">
+          <p class="mono text-xs" style="color: var(--py-muted);">Pregunta</p>
+          <p class="font-bold text-xl" style="color: var(--py-yellow);"><span id="q-current">1</span>/<span id="q-total">8</span></p>
+        </div>
+      </div>
+      <!-- Progress bar quiz -->
+      <div class="h-1.5 rounded-full mb-6" style="background: var(--py-border);">
+        <div class="prog-bar-inner" id="quiz-prog-bar" style="width: 12.5%"></div>
+      </div>
+
+      <div id="quiz-card" class="rounded-xl p-6" style="background: var(--py-card); border: 1px solid var(--py-border);">
+        <p id="quiz-question" class="font-bold text-base mb-5 leading-relaxed"></p>
+        <div id="quiz-options" class="space-y-3"></div>
+        <div id="quiz-feedback" class="mt-4 p-3 rounded-lg text-sm hidden"></div>
+        <button id="quiz-next" onclick="nextQuestion()" class="hidden mt-4 w-full py-2.5 rounded-lg font-bold text-sm transition-colors" style="background: var(--py-yellow); color: #000;">Siguiente →</button>
+      </div>
+
+      <div id="quiz-result" class="hidden rounded-xl p-8 text-center mt-4" style="background: var(--py-card); border: 1px solid var(--py-border);">
+        <div class="text-5xl mb-4" id="result-emoji">🎉</div>
+        <h3 class="font-extrabold text-2xl mb-2" id="result-title"></h3>
+        <p class="text-lg mb-1" style="color: var(--py-muted);">Puntaje: <span class="font-bold" style="color: var(--py-yellow);" id="result-score"></span></p>
+        <p id="result-msg" class="text-sm mb-6" style="color: var(--py-muted);"></p>
+        <button onclick="restartQuiz()" class="px-6 py-2.5 rounded-lg font-bold text-sm" style="background: var(--py-yellow); color: #000;">Reintentar Quiz</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===== TAB: FLASHCARDS ===== -->
+  <div id="tab-flashcards" class="tab-content pt-6">
+    <div class="max-w-2xl mx-auto">
+      <h2 class="font-extrabold text-2xl mb-2" style="color: #ffa657;">🃏 Flashcards</h2>
+      <p class="text-sm mb-6" style="color: var(--py-muted);">Haz clic en la tarjeta para revelar la respuesta. Navega con los botones.</p>
+
+      <div class="flashcard-wrap mb-6" id="flashcard" onclick="flipCard()">
+        <div class="flashcard-inner">
+          <div class="flashcard-front">
+            <div>
+              <p class="text-xs mb-3" style="color: var(--py-muted);">PREGUNTA — clic para revelar</p>
+              <p class="font-bold text-base" id="fc-front"></p>
+            </div>
+          </div>
+          <div class="flashcard-back">
+            <div>
+              <p class="text-xs mb-3" style="color: var(--py-blue);">RESPUESTA</p>
+              <p class="text-sm" id="fc-back" style="color: var(--py-text);"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between">
+        <button onclick="prevCard()" class="px-5 py-2 rounded-lg font-bold text-sm transition-colors" style="background: rgba(255,255,255,0.05); border: 1px solid var(--py-border); color: var(--py-text);">← Anterior</button>
+        <p class="mono text-sm" style="color: var(--py-muted);"><span id="fc-num">1</span> / <span id="fc-total"></span></p>
+        <button onclick="nextCard()" class="px-5 py-2 rounded-lg font-bold text-sm transition-colors" style="background: rgba(255,255,255,0.05); border: 1px solid var(--py-border); color: var(--py-text);">Siguiente →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TAB: OPERADORES ===== -->
+  <div id="tab-operadores" class="tab-content pt-6">
+    <h2 class="font-extrabold text-2xl mb-2" style="color: var(--py-blue);">📊 Operadores Especiales de Python</h2>
+    <p class="text-sm mb-6" style="color: var(--py-muted);">Los operadores que hacen a Python especial — haz clic para ver un ejemplo.</p>
+    <div class="rounded-xl overflow-hidden" style="border: 1px solid var(--py-border);">
+      <table class="data-table w-full">
+        <thead style="background: rgba(255,255,255,0.03);">
+          <tr><th class="text-left">Operador</th><th class="text-left">Nombre</th><th class="text-left">Función</th><th class="text-left">Ejemplo</th></tr>
+        </thead>
+        <tbody id="op-table"></tbody>
+      </table>
+    </div>
+    <!-- Op detail -->
+    <div id="op-detail" class="hidden mt-4 rounded-xl p-5" style="background: var(--py-card); border: 1px solid var(--py-yellow);">
+      <h4 class="font-bold mb-3" id="op-detail-title" style="color: var(--py-yellow);"></h4>
+      <div class="code-block" id="op-detail-code"></div>
+    </div>
+  </div>
+
+</div><!-- end max-w -->
+
+<footer class="text-center py-8 mt-8" style="border-top: 1px solid var(--py-border);">
+  <p class="mono text-xs" style="color: var(--py-muted);">🐍 Python Maestro — Guía Interactiva de Estudio &nbsp;|&nbsp; Built with ❤️ & Tailwind CDN</p>
+</footer>
 
 <script>
-// ===================== PYODIDE =====================
-let pyodideInstance = null;
-
-async function initPyodide() {
-    if (pyodideInstance) return pyodideInstance;
-    pyodideInstance = await loadPyodide({
-        indexURL: "https://cdn.jsdelivr.net/pyodide/v0.29.3/full/"
-    });
-    return pyodideInstance;
+// ===================== TABS =====================
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
 }
 
-async function runPython(code, outputId) {
-    const output = document.getElementById(outputId);
-    output.textContent = "Ejecutando...";
-    try {
-        const py = await initPyodide();
-        const result = py.runPython(code);
-        output.textContent = result !== undefined ? result : "Ejecutado correctamente";
-    } catch (err) {
-        output.textContent = "Error: " + err.message;
-    }
+// ===================== ACCORDION =====================
+const openTopics = new Set();
+function toggleTopic(id) {
+  const body = document.getElementById('body-' + id);
+  const arr  = document.getElementById('arr-' + id);
+  if (!body) return;
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  if (arr) arr.textContent = isOpen ? '▼' : '▲';
 }
 
-// ===================== CAMBIO DE NIVEL =====================
-function switchLevel(level) {
-    const content = document.getElementById('content');
-    
-    if (level === 0) {
-        content.innerHTML = `
-            <div class="card p-8 rounded-2xl max-w-2xl mx-auto">
-                <h2 class="text-2xl font-bold mb-6 text-red-400">Nivel 1 - Principiante</h2>
-                <textarea id="code1" class="code-editor w-full h-52 p-4 rounded-xl">nombre = "Ana"
-edad = 25
-print(f"Hola, soy {nombre} y tengo {edad} años.")</textarea>
-                <button onclick="runPython(document.getElementById('code1').value, 'out1')" 
-                        class="mt-4 w-full py-3 bg-red-600 rounded-xl font-medium">Ejecutar</button>
-                <div id="out1" class="output mt-6 p-6 rounded-xl min-h-[100px]"></div>
-            </div>
-        `;
-    } 
-    else if (level === 2) {
-        content.innerHTML = `
-            <div class="card p-8 rounded-2xl">
-                <h2 class="text-2xl font-bold mb-6 text-purple-400">Nivel 3 - F-Strings Avanzadas</h2>
-                <textarea id="code2" class="code-editor w-full h-96 p-4 rounded-xl" placeholder="Escribe tu código con f-strings aquí..."></textarea>
-                <div class="flex gap-4 mt-6">
-                    <button onclick="loadExample()" 
-                            class="flex-1 py-4 bg-zinc-700 hover:bg-zinc-600 rounded-xl">Cargar Ejemplo de Ticket</button>
-                    <button onclick="runPython(document.getElementById('code2').value, 'out2')" 
-                            class="flex-1 py-4 bg-red-600 hover:bg-red-700 rounded-xl font-bold">Ejecutar Reporte</button>
-                </div>
-                <div id="out2" class="output mt-8 p-8 rounded-xl min-h-[340px]"></div>
-            </div>
-        `;
-    }
+// ===================== PROGRESS =====================
+const TOTAL_TOPICS = 12;
+let done = JSON.parse(localStorage.getItem('py_done') || '[]');
+
+function markDone(id) {
+  const card = document.getElementById('card-' + id);
+  if (!card) return;
+  if (!done.includes(id)) {
+    done.push(id);
+    localStorage.setItem('py_done', JSON.stringify(done));
+  }
+  card.classList.add('done');
+  updateProgress();
 }
 
-function loadExample() {
-    const example = `print("=" * 70)
-print(f"{'TICKET DE VENTA':^70}")
-print("=" * 70)
-print(f"{'Producto':<35} {'Cant':>6} {'Precio':>14} {'Subtotal':>14}")
-print("-" * 70)
-
-productos = [
-    ("Laptop Dell", 1299.99, 2),
-    ("Mouse Logitech", 45.50, 5),
-    ("Teclado Mecánico", 89.99, 3)
-]
-
-total = 0
-for nombre, precio, cant in productos:
-    subtotal = precio * cant
-    total += subtotal
-    print(f"{nombre:<35} {cant:>6} ${precio:>13.2f} ${subtotal:>13.2f}")
-
-print("-" * 70)
-print(f"{'TOTAL A PAGAR':<57} ${total:>13.2f}")
-print("=" * 70)`;
-
-    document.getElementById('code2').value = example;
-    runPython(example, 'out2');
+function resetProgress() {
+  done = [];
+  localStorage.removeItem('py_done');
+  document.querySelectorAll('.topic-card').forEach(c => c.classList.remove('done'));
+  updateProgress();
 }
 
-// Iniciar
-window.onload = () => {
-    switchLevel(0);
-};
+function updateProgress() {
+  const pct = Math.round((done.length / TOTAL_TOPICS) * 100);
+  document.getElementById('global-prog').style.width = pct + '%';
+  document.getElementById('global-prog-txt').textContent = pct + '%';
+}
+
+function loadProgress() {
+  done.forEach(id => {
+    const card = document.getElementById('card-' + id);
+    if (card) card.classList.add('done');
+  });
+  updateProgress();
+}
+
+// ===================== COPY CODE =====================
+function copyCode(btn) {
+  const block = btn.parentElement;
+  const text = block.innerText.replace('Copiar', '').trim();
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '¡Copiado!';
+    setTimeout(() => btn.textContent = 'Copiar', 2000);
+  });
+}
+
+// ===================== QUIZ =====================
+const questions = [
+  { q: "¿Qué hace el operador ** en Python?", opts: ["División entera", "Potenciación (ej: 2**3 = 8)", "Multiplicación de cadenas", "Operador walrus"], ans: 1, exp: "** es el operador de exponenciación. 2**3 = 8, 3**2 = 9." },
+  { q: "¿Cuál estructura de datos en Python es INMUTABLE?", opts: ["Lista", "Diccionario", "Tupla", "Set"], ans: 2, exp: "Las tuplas son inmutables — no puedes cambiarlas después de crearlas. Eso las hace más rápidas que las listas." },
+  { q: "¿Qué palabra clave se usa para crear generadores?", opts: ["return", "yield", "async", "lambda"], ans: 1, exp: "yield pausa la función y entrega un valor, permitiendo generar datos de a uno sin cargar todo en RAM." },
+  { q: "¿Qué es el GIL en Python?", opts: ["Un framework web", "Un administrador de paquetes", "Un mecanismo que limita la ejecución a un hilo a la vez", "Un tipo de decorador"], ans: 2, exp: "Global Interpreter Lock — solo un hilo ejecuta bytecode a la vez. Garantiza seguridad de datos pero limita el paralelismo." },
+  { q: "¿Cuál es la librería principal de Python para ML/IA usada en ChatGPT?", opts: ["Django", "NumPy", "PyTorch / TensorFlow", "Selenium"], ans: 2, exp: "PyTorch (Meta) y TensorFlow (Google) son los frameworks de deep learning más usados. PyTorch es el favorito en investigación." },
+  { q: "¿Qué hace un decorador en Python?", opts: ["Cambia el color de la terminal", "Modifica o extiende el comportamiento de una función", "Importa módulos automáticamente", "Define variables globales"], ans: 1, exp: "Un decorador es una función que toma otra función y le añade funcionalidad sin modificar su código original. Se usa con @." },
+  { q: "¿Qué versión de Python introdujo el match (pattern matching)?", opts: ["Python 2.7", "Python 3.7", "Python 3.10", "Python 4.0"], ans: 2, exp: "El statement match fue introducido en Python 3.10 (PEP 634). Es similar al switch de otros lenguajes pero más poderoso." },
+  { q: "¿Qué devuelve {1, 2, 3, 2, 1} en Python?", opts: ["{1, 2, 3, 2, 1}", "[1, 2, 3]", "{1, 2, 3}", "Error"], ans: 2, exp: "Los sets eliminan duplicados automáticamente. {1, 2, 3, 2, 1} → {1, 2, 3}. Son colecciones de elementos únicos." },
+];
+
+let qIndex = 0, score = 0, answered = false;
+
+function loadQuestion() {
+  answered = false;
+  const q = questions[qIndex];
+  document.getElementById('q-current').textContent = qIndex + 1;
+  document.getElementById('q-total').textContent = questions.length;
+  document.getElementById('quiz-prog-bar').style.width = ((qIndex + 1) / questions.length * 100) + '%';
+  document.getElementById('quiz-question').textContent = q.q;
+  const opts = document.getElementById('quiz-options');
+  opts.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'quiz-opt w-full text-left';
+    btn.textContent = opt;
+    btn.onclick = () => selectAnswer(i);
+    opts.appendChild(btn);
+  });
+  document.getElementById('quiz-feedback').classList.add('hidden');
+  document.getElementById('quiz-next').classList.add('hidden');
+  document.getElementById('quiz-card').classList.remove('hidden');
+  document.getElementById('quiz-result').classList.add('hidden');
+}
+
+function selectAnswer(i) {
+  if (answered) return;
+  answered = true;
+  const q = questions[qIndex];
+  const opts = document.querySelectorAll('.quiz-opt');
+  opts.forEach((btn, idx) => {
+    btn.classList.add('disabled');
+    if (idx === q.ans) btn.classList.add('correct');
+    else if (idx === i) btn.classList.add('wrong');
+  });
+  const fb = document.getElementById('quiz-feedback');
+  fb.classList.remove('hidden');
+  if (i === q.ans) {
+    score++;
+    fb.style.background = 'rgba(63,185,80,0.12)';
+    fb.style.border = '1px solid rgba(63,185,80,0.4)';
+    fb.style.color = 'var(--py-green)';
+    fb.innerHTML = '✅ <strong>¡Correcto!</strong> ' + q.exp;
+  } else {
+    fb.style.background = 'rgba(248,81,73,0.12)';
+    fb.style.border = '1px solid rgba(248,81,73,0.4)';
+    fb.style.color = 'var(--py-red)';
+    fb.innerHTML = '❌ <strong>Incorrecto.</strong> ' + q.exp;
+  }
+  document.getElementById('quiz-next').classList.remove('hidden');
+  document.getElementById('quiz-next').textContent = qIndex < questions.length - 1 ? 'Siguiente →' : 'Ver resultado';
+}
+
+function nextQuestion() {
+  qIndex++;
+  if (qIndex >= questions.length) showResult();
+  else loadQuestion();
+}
+
+function showResult() {
+  document.getElementById('quiz-card').classList.add('hidden');
+  const res = document.getElementById('quiz-result');
+  res.classList.remove('hidden');
+  const pct = Math.round(score / questions.length * 100);
+  document.getElementById('result-score').textContent = score + '/' + questions.length + ' (' + pct + '%)';
+  let emoji, title, msg;
+  if (pct >= 87) { emoji='🏆'; title='¡Maestro Python!'; msg='Excelente dominio del lenguaje.'; }
+  else if (pct >= 62) { emoji='🎯'; title='¡Muy Bien!'; msg='Buen manejo. Repasa los temas que fallaste.'; }
+  else { emoji='📚'; title='¡Sigue Estudiando!'; msg='Revisa los temas con más detalle y vuelve a intentarlo.'; }
+  document.getElementById('result-emoji').textContent = emoji;
+  document.getElementById('result-title').textContent = title;
+  document.getElementById('result-msg').textContent = msg;
+}
+
+function restartQuiz() {
+  qIndex = 0; score = 0;
+  document.getElementById('quiz-result').classList.add('hidden');
+  document.getElementById('quiz-card').classList.remove('hidden');
+  loadQuestion();
+}
+
+// ===================== FLASHCARDS =====================
+const flashcards = [
+  { q: "¿Qué significa que Python sea de tipado dinámico?", a: "No necesitas declarar el tipo de una variable. Python lo infiere en tiempo de ejecución: x = 5 (int), x = 'hola' (str)." },
+  { q: "¿Cuál es la diferencia entre una lista y una tupla?", a: "Las listas son mutables (puedes cambiarlas). Las tuplas son inmutables (no puedes modificarlas). Las tuplas son más rápidas y seguras para datos fijos." },
+  { q: "¿Qué hace yield en una función?", a: "Convierte la función en un generador. En lugar de retornar todos los valores de golpe, los entrega uno por uno, ahorrando memoria." },
+  { q: "¿Qué es PEP 8?", a: "La guía de estilo oficial de Python. Establece convenciones como: snake_case para variables/funciones y PascalCase para clases." },
+  { q: "¿Para qué sirve el operador := (walrus)?", a: "Asigna un valor a una variable dentro de una expresión. Ejemplo: while (n := int(input())) != 0: — muy útil en bucles." },
+  { q: "¿Qué es un decorador?", a: "Una función que recibe otra función y devuelve una versión mejorada. Se usa con @. Ejemplo: @cronometro antes de una función." },
+  { q: "¿Qué diferencia asyncio de los hilos (threads)?", a: "asyncio usa concurrencia cooperativa (un loop de eventos). Los hilos usan paralelismo real pero el GIL los limita en Python puro." },
+  { q: "¿Qué es una List Comprehension?", a: "Una forma elegante de crear listas en una línea. Ejemplo: cuadrados = [x**2 for x in range(10)]. Más rápida que un bucle for." },
+  { q: "¿Qué hace el Garbage Collector de Python?", a: "Usa conteo de referencias. Cuando un objeto tiene 0 referencias (nadie lo apunta), Python libera automáticamente esa memoria RAM." },
+  { q: "¿Qué significa que Python compile a bytecode?", a: "Python no va directo a código máquina. Primero compila a bytecode (.pyc) que luego ejecuta la Python Virtual Machine (PVM)." },
+];
+
+let fcIndex = 0;
+function loadCard() {
+  const fc = flashcards[fcIndex];
+  document.getElementById('fc-front').textContent = fc.q;
+  document.getElementById('fc-back').textContent = fc.a;
+  document.getElementById('fc-num').textContent = fcIndex + 1;
+  document.getElementById('fc-total').textContent = flashcards.length;
+  document.getElementById('flashcard').classList.remove('flipped');
+}
+function flipCard() { document.getElementById('flashcard').classList.toggle('flipped'); }
+function nextCard() { fcIndex = (fcIndex + 1) % flashcards.length; loadCard(); }
+function prevCard() { fcIndex = (fcIndex - 1 + flashcards.length) % flashcards.length; loadCard(); }
+
+// ===================== OPERADORES =====================
+const operators = [
+  { op: '//', name: 'División Entera', fn: 'Divide y trunca el decimal', ex: '7 // 2 = 3', code: `<span class="cm"># División entera — trunca la parte decimal</span>\nresultado = <span class="num">7</span> // <span class="num">2</span>   <span class="cm"># → 3</span>\nresultado = <span class="num">-7</span> // <span class="num">2</span>  <span class="cm"># → -4 (redondea hacia abajo)</span>\n\n<span class="cm"># Útil para índices, páginas, etc.</span>\npagina_actual = total_items // items_por_pagina` },
+  { op: '**', name: 'Exponenciación', fn: 'Eleva a una potencia', ex: '2 ** 3 = 8', code: `<span class="cm"># Potenciación</span>\ncubo = <span class="num">2</span> ** <span class="num">3</span>      <span class="cm"># → 8</span>\nraiz = <span class="num">16</span> ** <span class="num">0.5</span>  <span class="cm"># → 4.0 (raíz cuadrada)</span>\n\n<span class="cm"># Más rápido que math.pow() para enteros</span>` },
+  { op: ':=', name: 'Walrus', fn: 'Asigna dentro de expresión', ex: 'while (n := input()) != "q"', code: `<span class="cm"># Sin walrus (repetitivo)</span>\ndata = <span class="fn">fetch</span>()\n<span class="kw">while</span> data:\n    <span class="fn">process</span>(data)\n    data = <span class="fn">fetch</span>()\n\n<span class="cm"># Con walrus ✅</span>\n<span class="kw">while</span> (data := <span class="fn">fetch</span>()):\n    <span class="fn">process</span>(data)` },
+  { op: 'in', name: 'Pertenencia', fn: 'Verifica si elemento está en colección', ex: '"a" in "hola" → True', code: `<span class="cm"># in — pertenencia</span>\n<span class="str">"py"</span> <span class="kw">in</span> <span class="str">"python"</span>   <span class="cm"># → True</span>\n<span class="num">3</span> <span class="kw">in</span> [<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>]    <span class="cm"># → True</span>\n<span class="str">"x"</span> <span class="kw">in</span> {<span class="str">"x"</span>: <span class="num">1</span>}   <span class="cm"># → True (keys del dict)</span>\n\n<span class="cm"># not in — lo contrario</span>\n<span class="num">5</span> <span class="kw">not in</span> [<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>]  <span class="cm"># → True</span>` },
+  { op: '%', name: 'Módulo', fn: 'Resto de la división', ex: '10 % 3 = 1', code: `<span class="cm"># Módulo — resto de la división</span>\n<span class="num">10</span> % <span class="num">3</span>   <span class="cm"># → 1</span>\n<span class="num">15</span> % <span class="num">5</span>   <span class="cm"># → 0</span>\n\n<span class="cm"># Usos comunes</span>\nes_par = numero % <span class="num">2</span> == <span class="num">0</span>\nes_mult_3 = x % <span class="num">3</span> == <span class="num">0</span>` },
+  { op: '@', name: 'Decorador / Matriz', fn: 'Decorar funciones o multiplicar matrices', ex: '@mi_decorador', code: `<span class="cm"># Como decorador (Python 2.4+)</span>\n<span class="kw">@</span><span class="fn">cronometro</span>\n<span class="kw">def</span> <span class="fn">mi_funcion</span>(): ...\n\n<span class="cm"># Como multiplicación de matrices (Python 3.5+)</span>\n<span class="cm"># resultado = matriz_a @ matriz_b</span>` },
+];
+
+function buildOpTable() {
+  const tbody = document.getElementById('op-table');
+  operators.forEach((op, i) => {
+    const tr = document.createElement('tr');
+    tr.style.cursor = 'pointer';
+    tr.innerHTML = `<td><span class="mono font-bold text-base" style="color:var(--py-yellow)">${op.op}</span></td><td>${op.name}</td><td style="color:var(--py-muted)">${op.fn}</td><td><span class="mono text-xs" style="color:var(--py-blue)">${op.ex}</span></td>`;
+    tr.onclick = () => showOpDetail(i);
+    tbody.appendChild(tr);
+  });
+}
+
+function showOpDetail(i) {
+  const op = operators[i];
+  const detail = document.getElementById('op-detail');
+  document.getElementById('op-detail-title').textContent = op.op + ' — ' + op.name;
+  document.getElementById('op-detail-code').innerHTML = `<button class="copy-btn" onclick="copyCode(this)">Copiar</button>${op.code}`;
+  detail.classList.remove('hidden');
+  detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ===================== INIT =====================
+window.addEventListener('DOMContentLoaded', () => {
+  loadProgress();
+  loadQuestion();
+  loadCard();
+  buildOpTable();
+});
 </script>
 </body>
 </html>
